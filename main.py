@@ -65,6 +65,10 @@ class main:
         self.start()
 
         while self.running:
+            self.graphic_manager.draw_screen()
+
+            if len(self.levels) <= 0:
+                self.running = False
             curr_level = self.levels[0]
             # event loop
             for event in pygame.event.get():
@@ -81,22 +85,21 @@ class main:
 
                     curr_level.update_drawing(drawing, x, y)
 
-            # change states (as needed)
+            # make sure to change state and, when state is changed, to remove levels
+
             if self.state_manager.manually_change_state():
-                self.graphic_manager.clear_state_prompt(self.state_manager.get_state())
-
-                # graphics: call and add graphics
-                self.graphic_manager.change_state_prompt(self.state_manager.get_state())
-
-                # if the level is over, move onto next level
                 if self.state_manager.state == PROMPTING:
                     self.levels.pop(0)
             
-            pygame.display.flip()
-            for i in self.drawing_manager.curr_lines:
-                print(i.first_loc, i.last_loc)
+            # display state prompts
+            self.graphic_manager.change_state_prompt(self.state_manager.get_state())
+            #print(self.state_manager.get_state())
 
-            print(self.levels)
+            pygame.display.update()
+            #for i in self.drawing_manager.curr_lines:
+            #    print(i.first_loc, i.last_loc)
+
+            #print(self.levels)
         
         pygame.quit()
 class level_1:
@@ -115,13 +118,15 @@ class level_1:
         # check if it is the first instance of the drawing
         if self.previously_drawing == False and drawing == True:
             self.curr_lines.append(self.drawn_straight_lines_manager([x, y]))
+        
+        # check if it is the last instance of the drawing
         if self.previously_drawing == True and drawing == False:
             self.curr_lines[-1].set_last([x, y])
 
         self.previously_drawing = drawing
 
-        for i in self.curr_lines:
-            print(i.first_loc, i.last_loc)
+        #for i in self.curr_lines:
+        #    print(i.first_loc, i.last_loc)
 
     def analysis(self):
         pass
@@ -134,7 +139,12 @@ class drawn_straight_lines:
     def __init__(self, first_loc):
         self.first_loc = first_loc #coordinates of the first object
 
+        self.all_points = [] # coordinates of all the objects, a list of lists 
+
         self.last_loc = [] #coordinates of the last object
+
+    def add_points(self, x, y):
+        self.all_points.append([x, y])
 
     def set_last(self, last_loc):
         self.last_loc = last_loc
@@ -186,11 +196,11 @@ class graphics:
     def change_state_prompt(self, state):
     # check if the game is in the first, prompting state
         if state == states[PROMPTING] or state == states[CONCLUSION]:
-            print("prompt_ENTER")
+            #print("prompt_ENTER")
             surface = pygame.image.load(prompt_ENTER)
             self.add_to_screen(surface, (change_X, change_Y))
         else:
-            print("prompt_SPACE")
+            #print("prompt_SPACE")
             surface = pygame.image.load(prompt_SPACE)
             self.add_to_screen(surface, (change_X, change_Y))
             
